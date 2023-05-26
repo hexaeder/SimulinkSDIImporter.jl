@@ -40,4 +40,6 @@ using Test
     plot(dq.Time, dq.d)
     plot!(dq.Time, ref.d)
 
+    show_sdi(file)
+
 end

@@ -6,7 +6,7 @@ using Dates
 using TimeZones
 using AbstractTrees
 
-export save_json
+export read_json, read_data, show_sdi
 
 MATLAB_EXEC = "matlab"
 MATLAB_FLAGS = ["-nodisplay", "-batch"]
@@ -57,6 +57,18 @@ function read_data(file, keys)
     csv = CSV.File(csvfile; header=2)
     @info "Loaded columns: $(csv.names)"
     return csv
+end
+
+function show_sdi(file)
+    file = abspath(file)
+    basedir = dirname(file)
+    bn = basename(file)
+
+    @info "Launch matlab and open SDI..."
+    matlabstr = "pwd(); addpath(\"$(@__DIR__)\"); fh=SDIFileHandler(\"$bn\"); fh.open_sdi()"
+
+    cmd = Cmd(`$MATLAB_EXEC $MATLAB_FLAGS "$matlabstr"`; dir=basedir)
+    run(cmd; wait=false)
 end
 
 function read_json(file)

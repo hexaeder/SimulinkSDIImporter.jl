@@ -207,6 +207,15 @@ classdef SDIFileHandler < handle
             writetable(t, fname,'WriteMode','Append','WriteVariableNames',true);
             %writetable(t, fname,'WriteVariableNames',true);
         end
+
+        function open_sdi(obj)
+            obj.load_file();
+            Simulink.sdi.view;
+            disp("Wait for SDI to close...")
+            while Simulink.sdi.Instance.isSDIRunning
+                pause(1)
+            end
+        end
     end
 end
 
