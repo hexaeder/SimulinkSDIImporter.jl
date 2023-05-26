@@ -123,19 +123,22 @@ classdef SDIFileHandler < handle
             desc = descent(obj.load_json(), namepart);
             name = desc.name;
             if strcmp(obj.runds.Name, name)
+                % allready loaded
                 ds = obj.runds;
             else
+                % load from file
                 obj.load_file()
                 runids = Simulink.sdi.getAllRunIDs();
                 for runid = runids'
                     run = Simulink.sdi.getRun(runid);
-                    if run.name == name
+                    if strcmp(run.name, name)
                         disp("Export " +name+" to workspace.")
                         ds = export(run);
-                        break
+                        obj.runds = ds;
+                        return
                     end
-                    error("Could not find run "+name+" in "+obj.file)
                 end
+                error("Could not find run "+name+" in "+obj.file)
             end
             obj.runds = ds;
         end
@@ -145,7 +148,8 @@ classdef SDIFileHandler < handle
             namechain = string.empty();
             for part = id
                 if part == id(end)
-                    namechain(end+1) = part;
+                    [fn, ~] = fullname(part, desc.content);
+                    namechain(end+1) = fn;
                 else
                     for p = 0:strlength(part)
                         short = extractBefore(part, p+1);
@@ -159,7 +163,7 @@ classdef SDIFileHandler < handle
                     end
                 end
             end
-            fname = extractBefore(obj.file, ".mldatx")+"_"+join(namechain, '_')+".csv";
+            fname = extractBefore(obj.file, ".mldatx")+"_"+join(namechain, '-')+".csv";
 
             if isfile(fname)
                 fid = fopen(fname,'r');
