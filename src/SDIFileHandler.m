@@ -17,6 +17,14 @@ classdef SDIFileHandler < handle
             obj.runds = Simulink.SimulationData.Dataset();
         end
 
+        function path = getexportdir(obj)
+            path = obj.file + ".export";
+        end
+
+        function path = getjsonpath(obj)
+            path = fullfile(obj.getexportdir(), "contents.json");
+        end
+
         function load_file(obj)
             if obj.loaded_to_sdi == false
                 disp("Load "+obj.file+" to SDI.")
@@ -34,17 +42,20 @@ classdef SDIFileHandler < handle
                 disp("JSON is outdated, recreate.")
             else
                 disp("No JSON found, create.")
+                if ~isfolder(obj.getexportdir())
+                    disp("No export folder found, create.")
+                    mkdir(obj.getexportdir())
+                end
             end
             desc = obj.describe_sdifile();
             json = jsonencode(desc, PrettyPrint=true);
-            fid = fopen(obj.file+".json",'wt');
+            fid = fopen(obj.getjsonpath(),'wt');
             fprintf(fid, json);
             fclose(fid);
         end
 
         function ret = has_json(obj)
-            fname = obj.file+".json";
-            ret = isfile(fname);
+            ret = isfile(obj.getjsonpath());
         end
 
         function ret = json_updated(obj)
@@ -58,7 +69,7 @@ classdef SDIFileHandler < handle
         end
 
         function desc = load_json_unsafe(obj)
-            fname = obj.file+".json";
+            fname = obj.getjsonpath();
             fid = fopen(fname);
             raw = fread(fid,inf);
             str = char(raw');
@@ -163,7 +174,7 @@ classdef SDIFileHandler < handle
                     end
                 end
             end
-            fname = extractBefore(obj.file, ".mldatx")+"_"+join(namechain, '-')+".csv";
+            fname = fullfile(obj.getexportdir(), join(namechain, '-')+".csv");
 
             if isfile(fname)
                 fid = fopen(fname,'r');

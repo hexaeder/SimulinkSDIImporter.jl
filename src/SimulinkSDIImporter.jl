@@ -5,14 +5,12 @@ using JSON3
 using Dates
 using TimeZones
 using AbstractTrees
+using DataFrames
 
 export read_json, read_data, show_sdi
 
 MATLAB_EXEC = "matlab"
 MATLAB_FLAGS = ["-nodisplay", "-batch"]
-# Write your package code here.
-
-# matlab -nodisplay -batch "x=3; disp(x)"
 
 function show_structure(file)
 end
@@ -54,8 +52,8 @@ function read_data(file, keys)
         @warn "Timestamps do not match, $(basename(file)) was changed after the CSV was exported."
     end
 
-    csv = CSV.File(csvfile; header=2)
-    @info "Loaded columns: $(csv.names)"
+    csv = CSV.read(csvfile, DataFrame; header=2)
+    @info "Loaded columns: $(names(csv))"
     return csv
 end
 
@@ -72,7 +70,7 @@ function show_sdi(file)
 end
 
 function read_json(file)
-    jsonf = file * ".json"
+    jsonf = joinpath(_export_dir(file), "contents.json")
     if !isfile(jsonf)
         save_json(file)
     end
@@ -166,10 +164,9 @@ function _csv_name(file, keys)
     tree = read_json(file)
     tree[keys] # check if getindex works
 
-    basen = basename(file)
-    @assert endswith(basen, ".mldatx")
-    basen = basen[1:end-length(".mldatx")]
-    return basen * "_" * join(_reduce_key(tree, keys),"-") * ".csv"
+    return joinpath(_export_dir(file), join(_reduce_key(tree, keys),"-") * ".csv")
 end
+
+_export_dir(file) = file*".export"
 
 end
