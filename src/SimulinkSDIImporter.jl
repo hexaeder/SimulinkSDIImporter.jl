@@ -116,12 +116,19 @@ function Base.getindex(n::SDIData, key::String)
         name = nodevalue(child)
         startswith(name, key) && push!(matches, i)
     end
-    if length(matches) > 1
+    if length(matches) == 1
+        return children(n)[only(matches)]
+    elseif length(matches) > 1
+        for m in matches
+            name = nodevalue(children(n)[m])
+            if key==name
+                return children(n)[m]
+            end
+        end
         throw(ArgumentError("Key $key not specific enough: $(nodevalue.(children(n)[collect(matches)]))"))
     elseif isempty(matches)
         throw(ArgumentError("No match for key $key: $(nodevalue.(children(n)))"))
     end
-    return children(n)[only(matches)]
 end
 
 function Base.getindex(n::SDIData, keys)

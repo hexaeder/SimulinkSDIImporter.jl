@@ -239,7 +239,10 @@ function [fn, idx] = fullname(namepart, content)
     
     matches = [];
     for i = 1:length(allnames)
-        if startsWith(allnames(i), namepart)
+        if strcmp(allnames(i), namepart) % found unique solution
+            matches = i;
+            break
+        elseif startsWith(allnames(i), namepart)
             matches(end+1) = i;
         end
     end
