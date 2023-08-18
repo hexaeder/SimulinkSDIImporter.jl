@@ -6,6 +6,7 @@ using Dates
 using TimeZones
 using AbstractTrees
 using DataFrames
+using Statistics
 
 export read_json, read_data, show_sdi
 
@@ -29,7 +30,7 @@ function save_json(file)
     run(cmd)
 end
 
-function read_data(file, keys)
+function read_data(file, keys; correctdelay=true)
     file = abspath(file)
     basedir = dirname(file)
     bn = basename(file)
@@ -52,9 +53,20 @@ function read_data(file, keys)
         @warn "Timestamps do not match, $(basename(file)) was changed after the CSV was exported."
     end
 
-    csv = CSV.read(csvfile, DataFrame; header=2)
-    @info "Loaded columns: $(names(csv))"
-    return csv
+    df = CSV.read(csvfile, DataFrame; header=2)
+    @info "Loaded columns: $(names(df))"
+
+    if correctdelay
+        _diff = diff(df.Time)
+        diffm = mean(_diff)
+        diffmin = minimum(_diff) - diffm
+        diffmax = maximum(_diff) - diffm
+        @assert diffmin > -1e-12 && diffmax < 1e-12 "Not equally sampled, cannot use `correctdealy=true`."
+        @info "correct for timeshift of $(round(diffm*10^6)) μs"
+        df.Time = df.Time .- diffm
+    end
+
+    return df
 end
 
 function show_sdi(file)
