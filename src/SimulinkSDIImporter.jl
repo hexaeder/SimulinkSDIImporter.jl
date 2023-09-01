@@ -42,7 +42,8 @@ function read_data(file, keys; correctdelay=true)
 
     if !isfile(csvfile)
         @info "Launch matlab to export data..."
-        matlabstr = "pwd(); addpath(\"$(@__DIR__)\"); fh=SDIFileHandler(\"$bn\"); fh.export_signal($(repr(keys)))"
+        expkeys = _expand_key(tree, keys)
+        matlabstr = "pwd(); addpath(\"$(@__DIR__)\"); fh=SDIFileHandler(\"$bn\"); fh.export_signal($(repr(expkeys)))"
 
         cmd = Cmd(`$MATLAB_EXEC $MATLAB_FLAGS "$matlabstr"`; dir=basedir)
         run(cmd)
@@ -122,11 +123,14 @@ end
 AbstractTrees.children(t::SDIData) = t.children;
 AbstractTrees.nodevalue(t::SDIData) = t.x;
 
-function Base.getindex(n::SDIData, key::String)
+Base.getindex(n::SDIData, key::String) = n[Regex("^"*key)]
+
+function Base.getindex(n::SDIData, key::Regex)
+# function Base.getindex(n::SDIData, key::Union{AbstractString, AbstractPattern})
     matches = Set{Int}()
     map(enumerate(children(n))) do (i, child)
         name = nodevalue(child)
-        startswith(name, key) && push!(matches, i)
+        contains(name, key) && push!(matches, i)
     end
     if length(matches) == 1
         return children(n)[only(matches)]
@@ -137,9 +141,9 @@ function Base.getindex(n::SDIData, key::String)
                 return children(n)[m]
             end
         end
-        throw(ArgumentError("Key $key not specific enough: $(nodevalue.(children(n)[collect(matches)]))"))
+        throw(ArgumentError("Key $(repr(key)) not specific enough to distinguish $(nodevalue.(children(n)[collect(matches)]))"))
     elseif isempty(matches)
-        throw(ArgumentError("No match for key $key: $(nodevalue.(children(n)))"))
+        throw(ArgumentError("No match for key $(repr(key)) within $(nodevalue.(children(n)))"))
     end
 end
 
@@ -163,7 +167,7 @@ function Base.haskey(n::SDIData, key)
 end
 
 function _reduce_key(n::SDIData, keys)
-    @assert haskey(n, keys) "Keysequence $key not valid."
+    keys = _expand_key(n::SDIData, keys)
     shortkeys = String[]
     for key in keys[begin:end-1]
         for i in 0:length(key)
@@ -177,6 +181,19 @@ function _reduce_key(n::SDIData, keys)
     end
     push!(shortkeys, nodevalue(n[keys[end]]))
     return shortkeys
+end
+
+function _expand_key(n::SDIData, keys)
+    if !haskey(n, keys)
+        @info "Keysequence $keys not valid."
+        n[keys]
+    end
+    longk = String[]
+    for k in keys
+        n = n[k]
+        push!(longk, nodevalue(n))
+    end
+    longk
 end
 
 function _csv_name(file, keys)

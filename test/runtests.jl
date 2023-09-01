@@ -2,7 +2,7 @@ using SimulinkSDIImporter
 using Test
 
 @testset "SimulinkSDIImporter.jl" begin
-    using SimulinkSDIImporter: save_json, read_json, _reduce_key, _csv_name, read_data
+    using SimulinkSDIImporter: save_json, read_json, _reduce_key, _csv_name, read_data, _expand_key
 
     file = "../assets/setpoint_steps.mldatx"
 
@@ -12,10 +12,9 @@ using Test
 
     @test tree["Voltage "]["Run 1"]["A_"] == tree["Voltage", "Run 1", "A_"]
 
+    @test haskey(tree, [r"^Voltage", "Run 1", "A_"])
 
-    @test haskey(tree, ["Voltage", "Run 1", "A_"])
-
-    @test _reduce_key(tree, ["Voltage", "Run 1", "A_"]) == ["V", "Run 1", "A_ref_DC"]
+    @test _reduce_key(tree, [r"^Voltage", "Run 1", "A_"]) == ["V", "Run 1", "A_ref_DC"]
 
     keys = ["Synced V", "Run 1", "U_INV_dq"]
     @time dq = read_data(file, keys);
@@ -31,4 +30,9 @@ using Test
         @assert endswith(edir, ".export")
         rm(edir, recursive=true)
     end
+
+    show_sdi(file)
+
+    read_data(file, ["Voltage", "Run 1", "A_ref_DC"])
+    read_data(file, ["Voltage", "Run 1", "U_INV_dq"])
 end
