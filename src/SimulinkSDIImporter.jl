@@ -8,28 +8,62 @@ using AbstractTrees
 using DataFrames
 using Statistics
 
-export read_json, read_data, show_sdi
+export show_structure, read_data, show_sdi
 
 MATLAB_EXEC = "matlab"
 MATLAB_FLAGS = ["-nodisplay", "-batch"]
 
-function show_structure(file)
-end
+"""
+    show_structure(file)
 
-function save_json(file)
-    file = abspath(file)
-    basedir = dirname(file)
-    bn = basename(file)
+Print tree showing the hirachy of signals included in `file`. Starts matlab and
+creates cache directory if not available.
+"""
+show_structure(file) = print_tree(read_json(file))
 
-    @assert isfile(file) "There is no file $file"
+"""
+    read_data(file, keys; correctdelay=true)
 
-    @info "Launch matlab to export json..."
-    matlabstr = "pwd(); addpath(\"$(@__DIR__)\"); fh=SDIFileHandler(\"$bn\");fh.save_json()"
+Load signal matching `keys` from `file`. File is an `*.mldatx` file which represents an Simulink SDI session.
+Returns a `DataFrame` of the signal.
 
-    cmd = Cmd(`$MATLAB_EXEC $MATLAB_FLAGS "$matlabstr"`; dir=basedir)
-    run(cmd)
-end
+On first call, the package will spawn matlab and export signal as a `*.csv` in a
+`filename.export` folder. On subsequent runs I'll load directly from CSV for speed.
+Cache will be invalidated in case that the timestamp on `mldatx`-file changes.
 
+`keys` is a vector of keys to identify a specific signal. Each key must uniquely identify the next node in the hierachy.
+
+- `key::String`: Only one signal is *start with* the given letters. Equivalent to `r"^key"`.
+- `key::Regex`:  Only one signal is allowed to *contain* the Regex.
+
+```
+├─ "Synced Voltage Setpoint Change"
+│  ├─ "Run 1: Converter_Model @ TargetPC1"
+│  │  ├─ "U_INV_dq"
+│  │  └─ "I_INV_dq"
+│  └─ "Run 2: Converter_Model @ TargetPC2"
+│     ├─ "U_INV_dq"
+│     └─ "I_INV_dq"
+└─ "Synced Current Setpoint Change"
+    ├─ "Run 4: Converter_Model @ TargetPC1"
+    |  ├─ "U_INV_dq"
+    |  └─ "I_INV_dq"
+    └─ "Run 5: Converter_Model @ TargetPC2"
+        ├─ "U_INV_dq"
+        └─ "I_INV_dq"
+```
+
+`["Synced V", "Run 1", "U"]` works.
+
+`["Synced", "Run 1", "I"]` does not work as both top level runs start with "Synced".
+
+`[r"Voltage", r"Run 1", "I"]` works.
+
+`[r"Voltage", r"1", "U"]` does not work because of "TargetPC1".
+
+If `corectdelay=true` the timeseries will be shifted in time by the sampling rate.
+This helps with aligning data obtained at different sample rates.
+"""
 function read_data(file, keys; correctdelay=true)
     file = abspath(file)
     basedir = dirname(file)
@@ -70,6 +104,11 @@ function read_data(file, keys; correctdelay=true)
     return df
 end
 
+"""
+    show_sdi(file)
+
+Start Matlab and launch SDI in Background. Will only launch SDI, no Matlabinterface.
+"""
 function show_sdi(file)
     file = abspath(file)
     basedir = dirname(file)
@@ -80,6 +119,20 @@ function show_sdi(file)
 
     cmd = Cmd(`$MATLAB_EXEC $MATLAB_FLAGS "$matlabstr"`; dir=basedir)
     run(cmd; wait=false)
+end
+
+function save_json(file)
+    file = abspath(file)
+    basedir = dirname(file)
+    bn = basename(file)
+
+    @assert isfile(file) "There is no file $file"
+
+    @info "Launch matlab to export json..."
+    matlabstr = "pwd(); addpath(\"$(@__DIR__)\"); fh=SDIFileHandler(\"$bn\");fh.save_json()"
+
+    cmd = Cmd(`$MATLAB_EXEC $MATLAB_FLAGS "$matlabstr"`; dir=basedir)
+    run(cmd)
 end
 
 function read_json(file)

@@ -35,4 +35,6 @@ using Test
 
     read_data(file, ["Voltage", "Run 1", "A_ref_DC"])
     read_data(file, ["Voltage", "Run 1", "U_INV_dq"])
+
+    show_structure(file)
 end
