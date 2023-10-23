@@ -188,11 +188,16 @@ function Base.getindex(n::SDIData, key::Regex)
     if length(matches) == 1
         return children(n)[only(matches)]
     elseif length(matches) > 1
+        fullmatches = String[]
         for m in matches
             name = nodevalue(children(n)[m])
-            if key==name
-                return children(n)[m]
+            # its fine if it matches on enirely
+            if match(key, name).match==name
+                push!(fullmatches, name)
             end
+        end
+        if length(fullmatches) == 1
+            return only(fullmatches)
         end
         throw(ArgumentError("Key $(repr(key)) not specific enough to distinguish $(nodevalue.(children(n)[collect(matches)]))"))
     elseif isempty(matches)
