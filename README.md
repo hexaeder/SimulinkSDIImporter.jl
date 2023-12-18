@@ -41,7 +41,10 @@ using `show_sdi(file)`.
 
 `show_structure(file)` prints a tree of all signals in the file.
 
+## Aggregated Export directory
+Per default, the data within `basedir/example.mldatx` will be exported to `basedir/example.mldatx.export`.
+However, if the basedir contains a directory called `sdi_exports`, the exported data will be stored in `basedir/sdi_exports/example.mldatx.export`.
 
 ## Disclaimer
 Tested with MATLAB 2022b for with data recorded from a SpeedGoat Realtime
-Computer using a Mac. I hope it is more general though.
+Computer using a MacOS and Linux.

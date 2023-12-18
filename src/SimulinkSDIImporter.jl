@@ -261,6 +261,14 @@ function _csv_name(file, keys)
     return joinpath(_export_dir(file), join(_reduce_key(tree, keys),"-") * ".csv")
 end
 
-_export_dir(file) = file*".export"
+function _export_dir(file)
+    sp = splitpath(file)
+    exportdir = joinpath(sp[begin:end-1]..., "sdi_exports")
+    if isdir(exportdir)
+        joinpath(exportdir, sp[end]*".export")
+    else
+        file*".export"
+    end
+end
 
 end

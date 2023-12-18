@@ -18,7 +18,13 @@ classdef SDIFileHandler < handle
         end
 
         function path = getexportdir(obj)
-            path = obj.file + ".export";
+            [basepath,name,ext] = fileparts(obj.file);
+            exportdir = fullfile(basepath, "sdi_exports");
+            if isfolder(exportdir)
+                path = fullfile(exportdir, name+ext+".export");
+            else
+                path = obj.file + ".export";
+            end
         end
 
         function path = getjsonpath(obj)
