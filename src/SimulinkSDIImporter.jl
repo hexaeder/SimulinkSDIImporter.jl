@@ -96,7 +96,7 @@ function read_data(file, keys; correctdelay=true)
         diffm = mean(_diff)
         diffmin = minimum(_diff) - diffm
         diffmax = maximum(_diff) - diffm
-        @assert diffmin > -1e-12 && diffmax < 1e-12 "Not equally sampled, cannot use `correctdealy=true`."
+        @assert diffmin > -1e-10 && diffmax < 1e-10 "Not equally sampled, cannot use `correctdealy=true`. Sampling differences to mean ($diffmin, $diffmax)"
         @info "correct for timeshift of $(round(diffm*10^6)) μs"
         df.Time = df.Time .- diffm
     end
