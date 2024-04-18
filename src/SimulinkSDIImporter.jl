@@ -91,7 +91,7 @@ function read_data(file, keys; correctdelay=true)
     df = CSV.read(csvfile, DataFrame; header=2)
     @info "Loaded columns: $(names(df))"
 
-    if correctdelay
+    if correctdelay && length(df.Time) > 1
         _diff = diff(df.Time)
         diffm = mean(_diff)
         diffmin = minimum(_diff) - diffm
