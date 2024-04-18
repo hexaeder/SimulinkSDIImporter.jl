@@ -94,9 +94,18 @@ function read_data(file, keys; correctdelay=true)
     if correctdelay && length(df.Time) > 1
         _diff = diff(df.Time)
         diffm = mean(_diff)
+
+        outlier_mask = vec(_diff .> 1.99*diffm)
+        if sum(outlier_mask) ≥ 1
+            @warn "There seem to be $(sum(outlier_mask)) outliers with much higher timestep ($(_diff[outlier_mask])), skip this."
+            _diff = _diff[.!(outlier_mask)]
+            diffm = mean(_diff)
+        end
+
+
         diffmin = minimum(_diff) - diffm
         diffmax = maximum(_diff) - diffm
-        @assert diffmin > -1e-10 && diffmax < 1e-10 "Not equally sampled, cannot use `correctdealy=true`. Sampling differences to mean ($diffmin, $diffmax)"
+        @assert diffmin > -1e-10 && diffmax < 1e-10 "Not equally sampled, cannot use `correctdelay=true`. Sampling differences to mean ($diffmin, $diffmax)"
         @info "correct for timeshift of $(round(diffm*10^6)) μs"
         df.Time = df.Time .- diffm
     end
