@@ -122,6 +122,7 @@ function show_sdi(file)
     file = abspath(file)
     basedir = dirname(file)
     bn = basename(file)
+    @assert isfile(file) "File does not exist!"
 
     @info "Launch matlab and open SDI..."
     matlabstr = "pwd(); addpath(\"$(@__DIR__)\"); fh=SDIFileHandler(\"$bn\"); fh.open_sdi()"
