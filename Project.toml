@@ -1,7 +1,7 @@
 name = "SimulinkSDIImporter"
 uuid = "71d5d903-a9d4-4e03-9846-ef3fdeefd64d"
 authors = ["Hans Würfel <git@wuerfel.io> and contributors"]
-version = "0.2.3"
+version = "0.2.4"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"

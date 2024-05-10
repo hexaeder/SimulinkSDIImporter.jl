@@ -118,6 +118,24 @@ classdef SDIFileHandler < handle
             desc.type = class(ds);
             elnames = getElementNames(ds);
             desc.content = {};
+
+            % find duplicates in names
+            [uniqueNames,~,idx] = unique(elnames);
+            counts = histcounts(idx,1:numel(uniqueNames)+1);
+            duplicates = uniqueNames(counts > 1);
+
+            if ~isempty(duplicates)
+                disp("The dataset contains timeseries with equal names. This package can't handle this. You won't be able to access the following signals:")
+                fprintf('Duplicates: ');
+                for i = 1:numel(duplicates)
+                    fprintf('%s ', duplicates{i});
+                end
+                fprintf('\n');
+                elnames = setdiff(elnames, duplicates);
+                disp("Other signals should be accessible normally!")
+            end
+
+            
             for i = 1:length(elnames)
                 elname = elnames{i};
                 element = ds.getElement(elname);
